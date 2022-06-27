@@ -1,7 +1,9 @@
 # Stream Duration Utility
 
 The Stream Duration Utility, or **SDU**, is a GUI-based program that displays the current duration of a YouTube livestream.
-Twitch livestreams already display their current live durations, but this feature may still be added at a future date.
+
+The SDU uses Google's YouTube API to make requests about a given YouTube video.
+Requests are only sent every 60 seconds for live videos, but the current duration will always be displayed down to the nearest second.
 
 ---
 
@@ -16,6 +18,7 @@ pip install -r requirements.txt
 ```
 Finally, open sdu.pyw in an editor and **add your own YouTube API key** into the `api_key` string found at the start of the main method at the bottom of the file.
 Failure to replace the API key will prevent requests from succeeding.
+
 Create your own google API key: https://console.cloud.google.com/apis/dashboard
 
 ## Launch instructions
@@ -33,8 +36,11 @@ Using "python" instead of "pythonw" will freeze the command-line even after the 
 
 #### Entering a YouTube URL
 Successfully running the SDU will open the main SDU window. From here, click on the open-folder icon to open a second window where you can enter a YouTube URL. 
+
 Strictly speaking, you should enter the 11-digit identifier in the URL rather than the whole "youtube.com/watch?v=", but the program will strip this out for you. The same functionality is true for youtu.be links.
+
 Once you've pasted in an id or URL, hit Go, or hit the Enter key. This will close the popup window and update the main window accordingly.
+
 If you press the X or Escape key instead, the window will close, and the main window will resume displaying information for the last entered URL, which may be the empty string (in which case no useful information is displayed).
 
 #### Entering a different URL
