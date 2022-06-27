@@ -62,11 +62,21 @@ def fetch_livestream_times(URL):
 
 # For live or upcoming streams, process start and end times into a sensible
 # string to display to the window
-def get_delta_label(time_start, time_end, time_adj, text_line1, text_line2):
-    delta = time_end - time_start + time_adj
+def get_delta_label(time_start, time_end, text_line1, text_line2):
+    # We subtract two datetimes to get a timedelta, chop off the fractions
+    # (decimals) of a second at the end, and remove the trailing "0:" if
+    # 0 hours remain. Then just put the labels together.
+    delta = time_end - time_start
     delta = str(delta).split(".")[0]
-    delta = delta[2:] if delta[:2] == "0:" else delta # trim hour mark off if 0
+    delta = delta[2:] if delta[:2] == "0:" else delta
     return f'{text_line1}{text_line2}{delta}'
+
+# Converts a time string to a UTC datetime object
+# Calling datetime.datetime.now(datetime.timezone.utc) gives us one time in UTC
+# YouTube times are already in UTC but we have to make sure datetime knows this
+def as_datetime(string):
+    s2 = string + "+0000"
+    return datetime.datetime.strptime(s2, "%Y-%m-%dT%H:%M:%SZ%z")
 
 # The bulk of the livestream code. Given a string URL, which can be an 11-digit
 # identifier or a whole youtube.com or youtu.be URL, construct an appropriate
@@ -89,10 +99,10 @@ def get_livestream_runtime(URL, live_check = False):
         else:
             return "Stream ID unknown", {}
 
-    start = datetime.datetime.strptime(stream_time, "%Y-%m-%dT%H:%M:%SZ")
+    start = as_datetime(stream_time)
     if ret == -3:
-        now = datetime.datetime.now()
-        ret_str = get_delta_label(now, start, datetime.timedelta(hours=-4),
+        now = datetime.datetime.now(datetime.timezone.utc)
+        ret_str = get_delta_label(now, start,
                                   "Stream has not yet started",
                                   "\nExpected wait: ")
         
@@ -103,8 +113,8 @@ def get_livestream_runtime(URL, live_check = False):
 
     if ret == 0:
         updated = '*' if live_check else ''
-        now = datetime.datetime.now()
-        ret_str = get_delta_label(start, now, datetime.timedelta(hours=4),
+        now = datetime.datetime.now(datetime.timezone.utc)
+        ret_str = get_delta_label(start, now,
                                   f'Stream is live{updated}',
                                   "\nDuration: ")
         
@@ -117,8 +127,8 @@ def get_livestream_runtime(URL, live_check = False):
 
     if ret == -2:
         ret_str = "Stream has concluded"
-        sEnd = datetime.datetime.strptime(stream_time, "%Y-%m-%dT%H:%M:%SZ")
-        sStart = datetime.datetime.strptime(acStart, "%Y-%m-%dT%H:%M:%SZ")
+        sEnd = as_datetime(stream_time)
+        sStart = as_datetime(acStart)
         ret_str += f'\nDuration: {str(sEnd - sStart)}'
         # If a stream is over, simply use actual start and end to determine
         # the runtime, and return the string with no extra timer values
@@ -164,17 +174,13 @@ class Refresh(threading.Thread):
                         # of seconds, we still want to update the second count
                         # every second. So we hold onto the last time pulled by
                         # the API, and we just do math every second
-                        now = datetime.datetime.now()
+                        now = datetime.datetime.now(datetime.timezone.utc)
                         if waits["refresh_type"] == "live":
                             updated = "*" if refresh == 0 else ""
-                            label_str = get_delta_label(last_time, now,
-                                datetime.timedelta(hours=4),
-                                  f'Stream is live{updated}',
+                            label_str = get_delta_label(last_time, now,                                  f'Stream is live{updated}',
                                   "\nDuration: ")
                         elif waits["refresh_type"] == "premiere":
-                            label_str = get_delta_label(now, last_time,
-                                datetime.timedelta(hours=-4),
-                                  "Stream has not yet started",
+                            label_str = get_delta_label(now, last_time,                                  "Stream has not yet started",
                                   "\nExpected wait: ")
                             # and of course we have different labels for live or
                             # upcoming streams, which I misleadingly refer to as
