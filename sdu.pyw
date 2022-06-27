@@ -3,6 +3,7 @@
 
 # Imports necessary for livestream details
 from googleapiclient.discovery import build
+from googleapiclient.errors import HttpError
 import datetime
 import time
 # Imports necessary for the GUI
@@ -10,12 +11,6 @@ from tkinter import *
 from tkinter import ttk
 from PIL import ImageTk, Image
 import threading
-
-API_KEY = "your_api_key_here"
-
-# https://googleapis.github.io/google-api-python-client/docs/dyn/youtube_v3.html
-# https://developers.google.com/youtube/v3/docs/videos
-youtube = build('youtube', 'v3', developerKey = API_KEY)
 
 
 # Methods necessary for livestream details
@@ -29,19 +24,25 @@ def mod_url(URL):
     return URL
 
 def livestream_details_request(URL):
-    # Send an API request to YouTube
-    request = youtube.videos().list(
-        part='liveStreamingDetails',
-        id=URL
-    )
+    try:
+        request = youtube.videos().list(
+            part='liveStreamingDetails',
+            id=URL
+        )
 
-    response = request.execute()
-    return response
+        response = request.execute()
+        return response
+    except HttpError:
+        return None
 
 # Given an API response, process it in terms of start and/or end times
 def fetch_livestream_times(URL):
     stream_details = livestream_details_request(URL)
     #print(stream_details)
+
+    # Code -1: if your request wasn't processed, assume a bad API key
+    if stream_details == None:
+        return -1, {"bad_api": True}, None
 
     # Code -1: if you submitted a malformed URL, no items will be available
     if len(stream_details['items']) == 0:
@@ -83,7 +84,10 @@ def get_livestream_runtime(URL, live_check = False):
     ret, stream_time, acStart = fetch_livestream_times(URL)
     
     if ret == -1:
-        return "Stream ID unknown", {}
+        if "bad_api" in stream_time.keys():
+            return "HTTP request failed\nCheck your API key", {}
+        else:
+            return "Stream ID unknown", {}
 
     start = datetime.datetime.strptime(stream_time, "%Y-%m-%dT%H:%M:%SZ")
     if ret == -3:
@@ -306,4 +310,17 @@ def construct_window():
 
 
 if __name__ == "__main__": # Call our main method
-    construct_window()
+    API_KEY = "your_api_key_here"
+
+    try:
+        youtube = build('youtube', 'v3', developerKey = API_KEY)
+        construct_window()
+    except:
+        root = Tk()
+        root.title("SDU")
+        root.iconbitmap("img/timer.ico") # https://findicons.com/icon/567889/timer
+        root.minsize(200, 60)
+        frm = ttk.Frame(root, padding=10)
+        frm.grid()
+        ttk.Label(frm, text="No API key given").grid(row=0, column=0)
+        root.mainloop()
