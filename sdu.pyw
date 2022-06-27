@@ -177,11 +177,13 @@ class Refresh(threading.Thread):
                         now = datetime.datetime.now(datetime.timezone.utc)
                         if waits["refresh_type"] == "live":
                             updated = "*" if refresh == 0 else ""
-                            label_str = get_delta_label(last_time, now,                                  f'Stream is live{updated}',
-                                  "\nDuration: ")
+                            label_str = get_delta_label(last_time, now,
+                                                f'Stream is live{updated}',
+                                                "\nDuration: ")
                         elif waits["refresh_type"] == "premiere":
-                            label_str = get_delta_label(now, last_time,                                  "Stream has not yet started",
-                                  "\nExpected wait: ")
+                            label_str = get_delta_label(now, last_time,
+                                                "Stream has not yet started",
+                                                "\nExpected wait: ")
                             # and of course we have different labels for live or
                             # upcoming streams, which I misleadingly refer to as
                             # 'premieres'
@@ -230,8 +232,9 @@ def close_frame(frame, kill_root = False):
             child.destroy()
 
     # Then kill the frame and *restart* the thread, since it has ended
+    # (Unless you're killing the program)
     frame.destroy()
-    if not kill_root: # Oh right, don't restart if you're quitting!!    
+    if not kill_root:    
         thread = Refresh()
         thread.start()
 
