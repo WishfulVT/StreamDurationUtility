@@ -298,7 +298,7 @@ def construct_window():
     frm.grid()
 
     # Create a button to open an "enter-URL" popup
-    icon = Image.open("img/open_folder.png").resize((32, 32), Image.ANTIALIAS)
+    icon = Image.open("img/open_folder.png").resize((32, 32), Image.Resampling.LANCZOS)
     iconimg = ImageTk.PhotoImage(icon) # https://www.flaticon.com/free-icon/open-folder-outline_25402
 
     thread = Refresh()

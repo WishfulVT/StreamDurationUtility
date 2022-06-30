@@ -28,7 +28,9 @@ If you prefer to call this from an existing command-line, use the following comm
 ```
 pythonw sdu.pyw
 ```
-Using "python" instead of "pythonw" will freeze the command-line even after the program finishes execution.
+Using "python" instead of "pythonw" (or "py" and "pyw" respectively) will freeze the command-line even after the program finishes execution.
+
+**Notice**: on July 2023 a certain image resampling keyword, Image.ANTIALIAS, will become deprecated. At that time (or even now if your compiler gives you a hard time), use sdu_2023.pyw, which already uses the future-proof Image.Resampling.LANCZOS.
 
 ---
 
